@@ -71,6 +71,7 @@ Success! Enabled the vault-plugin-secrets-citrixadc secrets engine at: citrixadc
 Before configuring the end point, you must create an admin user in Citrix ADC which is used to set the password. This user must have the privilege to set the system user, so you must create a cmd policy and bind this to system user. 
 
 ```
+# login to citrix ADC and run the following command
 $ add system cmdPolicy edit-user ALLOW "(^\\S+\\s+system\\s+\\S+)|(^\\S+\\s+system\\s+\\S+\\s+.*)|(^\\S+\\s+system\\s+user)|(^\\S+\\s+system\\s+user\\s+.*)|(^(?!rm)\\S+\\s+system\\s+\\S+)|(^(?!rm)\\S+\\s+system\\s+\\S+\\s+.*)"
 
 $ add system user vault-admin <password>
@@ -90,6 +91,7 @@ Now that you've configured the vault, you can setup the vault to dynamically rot
 Create a user in citrix ADC which is used by the client to interact with ADC.
 
 ```
+# login to citrix ADC and create a user
 $ add system user cic-user <password>
 ```
 Now you can configure the `roles` endpoint to autorotate the password for this user. 

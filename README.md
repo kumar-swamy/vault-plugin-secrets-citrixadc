@@ -1,6 +1,9 @@
 # Vault Plugin: Citrix ADC vault plugin backend
 
-This is a standalone backend plugin for use with [Hashicorp Vault](https://www.github.com/hashicorp/vault).
+This is a standalone backend plugin for use with [Hashicorp Vault](https://www.github.com/hashicorp/vault). This provides a functionality to rotate the Citrix ADC password automatically after a given TTL is elapsed by the vault which can be used by any clients to interact with citrix ADC. 
+
+For example, [Citrix ingress controller](https://github.com/citrix/citrix-k8s-ingress-controller/) provides ingress controller functionality in the kubernetes which needs ADC credentials to configure the ingresses on ADC. With the help of this plugin, you can configure the vault to auto rotate the password after a given TTL is elapsed, thereby strengthening the security posture. 
+
 
 **Please note**: We take Vault's security and our users' trust very seriously. If you believe you have found a security issue in Vault, _please responsibly disclose_ by contacting us at [security@hashicorp.com](mailto:security@hashicorp.com).
 
@@ -19,21 +22,93 @@ Otherwise, first read this guide on how to [get started with Vault](https://www.
 
 To learn specifically about how plugins work, see documentation on [Vault plugins](https://www.vaultproject.io/docs/internals/plugins.html).
 
-## Usage
+## Developing
 
-Please see [documentation for the plugin](https://www.vaultproject.io/docs/secrets/ad/index.html)
-on the Vault website.
+If you wish to work on this plugin, you'll first need
+[Go](https://www.golang.org) installed on your machine
+(version 1.10+ is *required*).
 
-This plugin is currently built into Vault and by default is accessed
-at `citrixadc`. To enable this in a running Vault server:
+For local dev first make sure Go is properly installed, including
+setting up a [GOPATH](https://golang.org/doc/code.html#GOPATH).
+Next, clone this repository into
+`$GOPATH/src/github.com/hashicorp/vault-plugin-secrets-citrixadc`.
+You can then download any required build tools by bootstrapping your
+environment:
 
 ```sh
-$ vault secrets enable citrixadc
-Success! Enabled the ad secrets engine at: citrixadc/
+$ make bootstrap
 ```
 
-Additionally starting with Vault 0.10 this backend is by default mounted
-at `secret/`.
+To compile a development version of this plugin, run `make` or `make dev`.
+This will put the plugin binary in the `bin` and `$GOPATH/bin` folders. `dev`
+mode will only generate the binary for your platform and is faster:
+
+```sh
+$ make
+$ make dev
+```
+
+In order to build for different archtectures, you can run `make bin`:
+```sh
+$ make bin
+```
+Once the plugin is built, copy the relevant plugin module to the vault plugin directory.
+
+
+## Usage
+
+
+
+To use this plugin, you must load the plugin. Please refer the [documentation](https://www.vaultproject.io/docs/internals/plugins) on loading a vault plugin
+
+Once the plugin is succesfully loaded, you can enable the plugin and start using it
+
+```sh
+vault secrets enable -path=citrixadc vault-plugin-secrets-citrixadc
+Success! Enabled the vault-plugin-secrets-citrixadc secrets engine at: citrixadc/
+```
+
+Before configuring the end point, you must create an admin user in Citrix ADC which is used to set the password. This user must have the privilege to set the system user, so you must create a cmd policy and bind this to system user. 
+
+```
+$ add system cmdPolicy edit-user ALLOW "(^\\S+\\s+system\\s+\\S+)|(^\\S+\\s+system\\s+\\S+\\s+.*)|(^\\S+\\s+system\\s+user)|(^\\S+\\s+system\\s+user\\s+.*)|(^(?!rm)\\S+\\s+system\\s+\\S+)|(^(?!rm)\\S+\\s+system\\s+\\S+\\s+.*)"
+
+$ add system user vault-admin <password>
+$ bind system user vault-admin edit-user 100 
+```
+
+
+Then you can access the `config` endpoint in the vault to configure the ADC details as shown below. 
+
+```sh 
+vault write citrixadc/config admin_username="vault-admin" admin_password=<password> insecure_tls=true url="https://x.x.x.x" max_ttl=24h ttl=1h
+Success! Data written to: citrixadc/config
+```
+
+Now that you've configured the vault, you can setup the vault to dynamically rotate the password. 
+
+Create a user in citrix ADC which is used by the client to interact with ADC.
+
+```
+$ add system user cic-user <password>
+```
+Now you can configure the `roles` endpoint to autorotate the password for this user. 
+
+```
+vault write citrixadc/roles/cic user_name=cic-user ttl=1h
+```
+
+Now you can read the current password using `creds` endpoint. This plugin will automatically rotate the password if the TTL is elpased. 
+# Note: This will lazily rotate the password only when it is read and TTL is elapsed. If TTL is elpased but credential is not read, then password is not rotated
+
+```
+vault read citrixadc/creds/cic
+Key                 Value
+---                 -----
+current_password    ?@09AZILjFmjcmtv
+last_password       ?@09AZCUrltFhCic
+username            cic-user
+```
 
 ## Developing
 
@@ -44,7 +119,7 @@ If you wish to work on this plugin, you'll first need
 For local dev first make sure Go is properly installed, including
 setting up a [GOPATH](https://golang.org/doc/code.html#GOPATH).
 Next, clone this repository into
-`$GOPATH/src/github.com/hashicorp/vault-plugin-secrets-ad`.
+`$GOPATH/src/github.com/hashicorp/vault-plugin-secrets-citrixadc`.
 You can then download any required build tools by bootstrapping your
 environment:
 
@@ -91,9 +166,9 @@ Note you should generate a new sha256 checksum if you have made changes
 to the plugin. Example using openssl:
 
 ```sh
-openssl dgst -sha256 $GOPATH/vault-plugin-secrets-ad
+openssl dgst -sha256 $GOPATH/vault-plugin-secrets-citrixadc
 ...
-SHA256(.../go/bin/vault-plugin-secrets-ad)= 896c13c0f5305daed381952a128322e02bc28a57d0c862a78cbc2ea66e8c6fa1
+SHA256(.../go/bin/vault-plugin-secrets-citrixadc)= 896c13c0f5305daed381952a128322e02bc28a57d0c862a78cbc2ea66e8c6fa1
 ```
 
 Enable the secrets plugin backend using the secrets enable plugin command:

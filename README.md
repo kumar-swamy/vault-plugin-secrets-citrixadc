@@ -110,6 +110,12 @@ last_password       ?@09AZCUrltFhCic
 username            cic-user
 ```
 
+You can also rotate the password of admin user using `rotate-root` endpoint. This means only vault will have the password for admin user. 
+
+```
+vault write -force citrixadc/rotate-root
+```
+
 ## Developing
 
 If you wish to work on this plugin, you'll first need

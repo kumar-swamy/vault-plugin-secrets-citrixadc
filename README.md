@@ -99,7 +99,7 @@ vault write citrixadc/roles/cic user_name=cic-user ttl=1h
 ```
 
 Now you can read the current password using `creds` endpoint. This plugin will automatically rotate the password if the TTL is elpased. 
-# Note: This will lazily rotate the password only when it is read and TTL is elapsed. If TTL is elpased but credential is not read, then password is not rotated
+**NOTE** This will lazily rotate the password only when it is read and TTL is elapsed. If TTL is elpased but credential is not read, then password is not rotated
 
 ```
 vault read citrixadc/creds/cic

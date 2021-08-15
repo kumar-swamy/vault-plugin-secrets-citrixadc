@@ -5,8 +5,6 @@ This is a standalone backend plugin for use with [Hashicorp Vault](https://www.g
 For example, [Citrix ingress controller](https://github.com/citrix/citrix-k8s-ingress-controller/) provides ingress controller functionality in the kubernetes which needs ADC credentials to configure the ingresses on ADC. With the help of this plugin, you can configure the vault to auto rotate the password after a given TTL is elapsed, thereby strengthening the security posture. 
 
 
-**Please note**: We take Vault's security and our users' trust very seriously. If you believe you have found a security issue in Vault, _please responsibly disclose_ by contacting us at [security@hashicorp.com](mailto:security@hashicorp.com).
-
 ## Quick Links
 - Vault Website: https://www.vaultproject.io
 - Citrix Ingress controller: https://github.com/citrix/citrix-k8s-ingress-controller/

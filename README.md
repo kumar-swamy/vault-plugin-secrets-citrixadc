@@ -9,7 +9,7 @@ For example, [Citrix ingress controller](https://github.com/citrix/citrix-k8s-in
 
 ## Quick Links
 - Vault Website: https://www.vaultproject.io
-- Active Directory Docs: https://www.vaultproject.io/docs/secrets/ad/index.html
+- Citrix Ingress controller: https://github.com/citrix/citrix-k8s-ingress-controller/
 - Main Project Github: https://www.github.com/hashicorp/vault
 
 ## Getting Started
@@ -156,31 +156,6 @@ $ vault server -config=path/to/config.json ...
 
 Once the server is started, register the plugin in the Vault server's [plugin catalog](https://www.vaultproject.io/docs/internals/plugins.html#plugin-catalog):
 
-```sh
-$ vault write sys/plugins/catalog/secret/custom-ad \
-        sha_256=<expected SHA256 Hex value of the plugin binary> \
-        command="vault-plugin-secrets-citrixadc"
-...
-Success! Data written to: sys/plugins/catalog/secret/custom-ad
-```
-
-Note you should generate a new sha256 checksum if you have made changes
-to the plugin. Example using openssl:
-
-```sh
-openssl dgst -sha256 $GOPATH/vault-plugin-secrets-citrixadc
-...
-SHA256(.../go/bin/vault-plugin-secrets-citrixadc)= 896c13c0f5305daed381952a128322e02bc28a57d0c862a78cbc2ea66e8c6fa1
-```
-
-Enable the secrets plugin backend using the secrets enable plugin command:
-
-```sh
-$ vault secrets enable custom-ad
-...
-
-Successfully enabled 'plugin' at 'custom-ad'!
-```
 
 #### Tests
 
